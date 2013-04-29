@@ -184,6 +184,39 @@ package play.api.mvc {
       queryString: Map[String, Seq[String]] = this.queryString,
       headers: Headers = this.headers,
       remoteAddress: String = this.remoteAddress): RequestHeader = {
+      RequestHeader(
+        id = id,
+        tags = tags,
+        uri = uri,
+        path = path,
+        method = method,
+        version = version,
+        queryString = queryString,
+        headers = headers,
+        remoteAddress = remoteAddress
+      )
+    }
+
+    override def toString = {
+      method + " " + uri
+    }
+
+  }
+
+  object RequestHeader {
+    // “The first "q" parameter (if any) separates the media-range parameter(s) from the accept-params.”
+    val qPattern = ";\\s*q=([0-9.]+)".r
+
+    def apply(
+      id: Long = 0,
+      tags: Map[String, String] = Map.empty,
+      uri: String = "/",
+      path: String = "/",
+      method: String = "GET",
+      version: String = "HTTP/1.1",
+      queryString: Map[String, Seq[String]] = Map.empty,
+      headers: Headers,
+      remoteAddress: String = "") = {
       val (_id, _tags, _uri, _path, _method, _version, _queryString, _headers, _remoteAddress) = (id, tags, uri, path, method, version, queryString, headers, remoteAddress)
       new RequestHeader {
         val id = _id
@@ -197,16 +230,6 @@ package play.api.mvc {
         val remoteAddress = _remoteAddress
       }
     }
-
-    override def toString = {
-      method + " " + uri
-    }
-
-  }
-
-  object RequestHeader {
-    // “The first "q" parameter (if any) separates the media-range parameter(s) from the accept-params.”
-    val qPattern = ";\\s*q=([0-9.]+)".r
   }
 
   /**
