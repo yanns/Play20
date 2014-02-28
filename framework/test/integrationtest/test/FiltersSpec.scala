@@ -67,15 +67,16 @@ object FiltersSpec extends Specification with WsTestClient {
       
       val filterAddedHeaderKey = "CUSTOM_HEADER"
       val filterAddedHeaderVal = "custom header val"
-      
-      object MockGlobal3 extends WithFilters(new Filter {
+      val filterAddedHeader = new Filter {
         def apply(next: RequestHeader => Future[SimpleResult])(request: RequestHeader): Future[SimpleResult] = {
           next(request.copy(headers = addCustomHeader(request.headers)))
         }
         def addCustomHeader(originalHeaders: Headers): Headers = {
           FakeHeaders(originalHeaders.toMap.toSeq :+ (filterAddedHeaderKey -> Seq(filterAddedHeaderVal)))
         }
-      }) {
+      }
+      
+      object MockGlobal3 extends WithFilters(filterAddedHeader) {
         override def onHandlerNotFound(request: RequestHeader) = {
           Future.successful(Results.NotFound(request.headers.get(filterAddedHeaderKey).getOrElse("undefined header")))
         }
@@ -86,7 +87,18 @@ object FiltersSpec extends Specification with WsTestClient {
         response.status must_== 404
         response.body must_== filterAddedHeaderVal
       }
-      
+
+      object MockGlobal4 extends WithFilters(filterAddedHeader) {
+        override def onError(request: RequestHeader, ex: Throwable): Future[SimpleResult] = {
+          Future.successful(Results.NotFound(request.headers.get(filterAddedHeaderKey).getOrElse("undefined header in onError")))
+        }
+      }
+
+      "requests throwing an internal server error should receive a RequestHeader modified by upstream filters" in new WithServer(FakeApplication(withGlobal = Some(MockGlobal4))) {
+        val response = Await.result(wsCall(controllers.routes.Application.syncError()).get(), Duration.Inf)
+        response.status must_== 404
+        response.body must_== filterAddedHeaderVal
+      }
     }
   }
 }
