@@ -4,6 +4,7 @@ import play.libs.F;
 import play.mvc.*;
 import play.mvc.Http.*;
 
+import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.lang.reflect.*;
 
@@ -14,6 +15,13 @@ import java.lang.reflect.*;
  * How to use it: create a <code>Global.java</code> class in your Java application and override the methods you want.
  */
 public class GlobalSettings {
+
+    /**
+     * Provides a custom SSL context to listen on HTTPS port
+     */
+    public SSLContext createSSLContext(Application app) {
+        return null;
+    }
 
     /**
      * Executed before any plugin - you can set-up your database schema here, for instance.

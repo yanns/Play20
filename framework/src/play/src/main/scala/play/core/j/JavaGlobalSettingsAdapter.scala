@@ -5,10 +5,15 @@ import play.api.mvc._
 import java.io.File
 import scala.concurrent.Future
 import play.api.libs.iteratee._
+import javax.net.ssl.SSLContext
 
 /** Adapter that holds the Java `GlobalSettings` and acts as a Scala `GlobalSettings` for the framework. */
 class JavaGlobalSettingsAdapter(val underlying: play.GlobalSettings) extends GlobalSettings {
   require(underlying != null, "underlying cannot be null")
+
+  override def createSSLContext(app: Application): Option[SSLContext] = {
+    Option(underlying.createSSLContext(new play.Application(app)))
+  }
 
   override def beforeStart(app: Application) {
     underlying.beforeStart(new play.Application(app))

@@ -4,6 +4,7 @@ import play.api.mvc._
 import java.io.File
 import scala.util.control.NonFatal
 import scala.concurrent.Future
+import javax.net.ssl.SSLContext
 
 /**
  * Defines an application’s global settings.
@@ -22,6 +23,11 @@ import scala.concurrent.Future
 trait GlobalSettings {
 
   import Results._
+
+  /**
+   * Provides a custom SSL context to listen on HTTPS port
+   */
+  def createSSLContext(app: Application): Option[SSLContext] = None
 
   /**
    * Called before the application starts.
