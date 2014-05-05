@@ -110,16 +110,21 @@ class NingAsyncHttpClientConfigBuilder(config: WSClientConfig,
   def configureSSL(sslConfig: SSLConfig) {
 
     // context!
-    val useDefault = sslConfig.default.getOrElse(false)
-    val sslContext = if (useDefault) {
-      logger.info("buildSSLContext: ws.ssl.default is true, using default SSLContext")
-      validateDefaultTrustManager(sslConfig)
-      SSLContext.getDefault
-    } else {
-      // break out the static methods as much as we can...
-      val keyManagerFactory = buildKeyManagerFactory(sslConfig)
-      val trustManagerFactory = buildTrustManagerFactory(sslConfig)
-      new ConfigSSLContextBuilder(sslConfig, keyManagerFactory, trustManagerFactory).build()
+    val sslContext = sslConfig.SSLContextBuilderClassName match {
+      case Some(className) => buildSSLContextBuilder(className).build()
+      case None => {
+        val useDefault = sslConfig.default.getOrElse(false)
+        if (useDefault) {
+          logger.info("buildSSLContext: ws.ssl.default is true, using default SSLContext")
+          validateDefaultTrustManager(sslConfig)
+          SSLContext.getDefault
+        } else {
+          // break out the static methods as much as we can...
+          val keyManagerFactory = buildKeyManagerFactory(sslConfig)
+          val trustManagerFactory = buildTrustManagerFactory(sslConfig)
+          new ConfigSSLContextBuilder(sslConfig, keyManagerFactory, trustManagerFactory).build()
+        }
+      }
     }
 
     // protocols!
@@ -158,6 +163,19 @@ class NingAsyncHttpClientConfigBuilder(config: WSClientConfig,
   def buildTrustManagerFactory(ssl: SSLConfig): TrustManagerFactoryWrapper = {
     val trustManagerAlgorithm = ssl.trustManagerConfig.flatMap(_.algorithm).getOrElse(TrustManagerFactory.getDefaultAlgorithm)
     new DefaultTrustManagerFactoryWrapper(trustManagerAlgorithm)
+  }
+
+  def buildSSLContextBuilder(sslContextBuilderClassName: String): SSLContextBuilder = {
+    logger.debug("SSLContextBuilder: use SSLContext from {}", sslContextBuilderClassName)
+    // Provide people with the option of using their own SSLContextBuilder
+
+    try {
+      val sslContextBuilderClass = Class.forName(sslContextBuilderClassName)
+      sslContextBuilderClass.newInstance().asInstanceOf[SSLContextBuilder]
+    } catch {
+      case e: Exception =>
+        throw new IllegalStateException("Cannot configure SSL context builder", e)
+    }
   }
 
   def buildHostnameVerifier(sslConfig: SSLConfig): HostnameVerifier = {

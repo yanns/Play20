@@ -149,6 +149,17 @@ object NingAsyncHttpClientConfigBuilderSpec extends Specification with Mockito {
         }
       }
 
+      "with SSL context provider" should {
+        "use an explicit SSL context provider" in {
+          // spy SSL Context
+          val sslConfig = DefaultSSLConfig(SSLContextBuilderClassName = Some(classOf[DefaultHostnameVerifier].getName))
+          val config = defaultConfig.copy(ssl = Some(sslConfig))
+          val builder = new NingAsyncHttpClientConfigBuilder(config)
+
+          builder.configureSSL(sslConfig)
+        }
+      }
+
       "with hostname verifier" should {
         "use the default hostname verifier" in {
           val sslConfig = DefaultSSLConfig(hostnameVerifierClassName = None)

@@ -83,6 +83,8 @@ trait SSLConfig {
 
   def disabledKeyAlgorithms: Option[String]
 
+  def SSLContextBuilderClassName: Option[String]
+
   def keyManagerConfig: Option[KeyManagerConfig]
 
   def trustManagerConfig: Option[TrustManagerConfig]
@@ -201,6 +203,7 @@ case class DefaultSSLConfig(
   enabledProtocols: Option[Seq[String]] = None,
   disabledSignatureAlgorithms: Option[String] = None,
   disabledKeyAlgorithms: Option[String] = None,
+  SSLContextBuilderClassName: Option[String] = None,
   keyManagerConfig: Option[KeyManagerConfig] = None,
   trustManagerConfig: Option[TrustManagerConfig] = None,
   hostnameVerifierClassName: Option[String] = None,
@@ -246,6 +249,8 @@ class DefaultSSLConfigParser(c: Configuration) {
 
     val hostnameVerifierClassName = c.getString("hostnameVerifierClassName")
 
+    val sslContextBuilderClassName = c.getString("SSLContextBuilder")
+
     val disabledSignatureAlgorithms = c.getString("disabledSignatureAlgorithms")
 
     val disabledKeyAlgorithms = c.getString("disabledKeyAlgorithms")
@@ -275,6 +280,7 @@ class DefaultSSLConfigParser(c: Configuration) {
       revocationLists = revocationLists,
       enabledCipherSuites = ciphers,
       enabledProtocols = protocols,
+      SSLContextBuilderClassName = sslContextBuilderClassName,
       keyManagerConfig = keyManagers,
       hostnameVerifierClassName = hostnameVerifierClassName,
       disabledSignatureAlgorithms = disabledSignatureAlgorithms,
