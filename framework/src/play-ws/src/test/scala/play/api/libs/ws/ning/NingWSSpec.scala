@@ -8,8 +8,10 @@ import com.ning.http.client
 import com.ning.http.client.cookie.{ Cookie => AHCCookie }
 import com.ning.http.client.{ AsyncHttpClient, FluentCaseInsensitiveStringsMap, Param, Response => AHCResponse }
 import org.specs2.mock.Mockito
+import play.api.libs.iteratee.Enumerator
 
 import play.api.mvc._
+import play.api.mvc.Results._
 
 import java.util
 import play.api.libs.ws._
@@ -220,6 +222,35 @@ object NingWSSpec extends PlaySpecification with Mockito {
 
       rep.status must ===(200)
       (rep.json \ "data").asOpt[String] must beSome("body")
+    }
+
+    def uploadApp = FakeApplication(withRoutes = {
+      case ("POST", "/") =>
+        Action { request =>
+          request.body.asRaw.fold[Result](BadRequest) { raw =>
+            val size = raw.size
+            Ok(s"size=$size")
+          }
+        }
+    })
+
+    "support in memory body" in new WithServer(uploadApp) {
+      val payload = "ze body content".getBytes
+      val req = WS.url("http://localhost:" + port + "/").withMethod("POST").withBody(InMemoryBody(payload)).execute()
+
+      val rep = await(req)
+      rep.status must ===(200)
+      rep.body must_== s"size=${payload.length}"
+    }
+
+    "support in streamed body" in new WithServer(uploadApp) {
+      import play.api.libs.concurrent.Execution.Implicits._
+      val payload: Enumerator[Array[Byte]] = Enumerator("ze ", "body ", "content").map(_.getBytes)
+      val req = WS.url("http://localhost:" + port + "/").withMethod("POST").withBody(StreamedBody(payload)).execute()
+
+      val rep = await(req)
+      rep.status must ===(200)
+      rep.body must_== s"size=${"ze body content".length}"
     }
 
     def gzipFakeApp = {

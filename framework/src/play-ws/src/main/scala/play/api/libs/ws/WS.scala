@@ -247,9 +247,7 @@ case class InMemoryBody(bytes: Array[Byte]) extends WSBody
  *
  * @param bytes An enumerator of the bytes of the body
  */
-case class StreamedBody(bytes: Enumerator[Array[Byte]]) extends WSBody {
-  throw new NotImplementedError("A streaming request body is not yet implemented")
-}
+case class StreamedBody(bytes: Enumerator[Array[Byte]]) extends WSBody
 
 /**
  * A file body

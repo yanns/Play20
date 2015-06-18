@@ -4,9 +4,11 @@
 package play.api.libs.ws.ning
 
 import java.io.UnsupportedEncodingException
+import java.nio.ByteBuffer
 import java.nio.charset.{ Charset, StandardCharsets }
 import javax.inject.{ Inject, Provider, Singleton }
 
+import com.ning.http.client.providers.netty.request.body.FeedableBodyGenerator
 import com.ning.http.client.{ Response => AHCResponse, ProxyServer => AHCProxyServer, _ }
 import com.ning.http.client.cookie.{ Cookie => AHCCookie }
 import com.ning.http.client.Realm.{ RealmBuilder, AuthScheme }
@@ -91,6 +93,8 @@ case class NingWSRequest(client: NingWSClient,
     virtualHost: Option[String],
     proxyServer: Option[WSProxyServer],
     disableUrlEncoding: Option[Boolean]) extends WSRequest {
+
+  private var onExecuted: () ⇒ Unit = () ⇒ Unit
 
   def sign(calc: WSSignatureCalculator): WSRequest = copy(calc = Some(calc))
 
@@ -278,7 +282,9 @@ case class NingWSRequest(client: NingWSClient,
 
         builder
       case StreamedBody(bytes) =>
-        builder
+        val (bodyGenerator, it) = createFeedableBodyGenerator()
+        onExecuted = () ⇒ bytes.run(it)
+        builder.setBody(bodyGenerator)
     }
 
     // headers
@@ -298,6 +304,30 @@ case class NingWSRequest(client: NingWSClient,
     builderWithBody.build()
   }
 
+  private def createFeedableBodyGenerator(): (FeedableBodyGenerator, Iteratee[Array[Byte], Long]) = {
+    val bodyGenerator = new FeedableBodyGenerator
+
+    def forward(bytesSent: Long, generator: FeedableBodyGenerator): Iteratee[Array[Byte], Long] = Cont {
+      case Input.El(array) =>
+        val isLast = false
+        generator.feed(ByteBuffer.wrap(array), isLast)
+        val newSize = bytesSent + array.length
+        forward(newSize, generator)
+
+      case Input.Empty => forward(bytesSent, generator)
+
+      case Input.EOF =>
+        val isLast = true
+        val emptyBuffer = ByteBuffer.wrap(Array[Byte]())
+        generator.feed(emptyBuffer, isLast)
+        Done(bytesSent)
+    }
+
+    val it = forward(0, bodyGenerator)
+
+    (bodyGenerator, it)
+  }
+
   private[libs] def execute(request: Request): Future[NingWSResponse] = {
 
     import com.ning.http.client.AsyncCompletionHandler
@@ -313,6 +343,7 @@ case class NingWSRequest(client: NingWSClient,
         result.failure(t)
       }
     })
+    onExecuted()
     result.future
   }
 
@@ -412,6 +443,7 @@ case class NingWSRequest(client: NingWSClient,
         errorInStream.tryFailure(t)
       }
     })
+    onExecuted()
     result.future
   }
 
