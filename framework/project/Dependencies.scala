@@ -126,9 +126,7 @@ object Dependencies {
 
       "javax.transaction" % "jta" % "1.1",
 
-      "com.google.inject" % "guice" % "4.0",
-      "com.google.inject.extensions" % "guice-assistedinject" % "4.0",
-
+      "javax.inject" % "javax.inject" % "1",
       guava % Test,
 
       "org.scala-lang" % "scala-reflect" % scalaVersion,

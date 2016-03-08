@@ -154,7 +154,7 @@ object DevServerStart {
 
                       val newApplication = Threads.withContextClassLoader(projectClassloader) {
                         val context = ApplicationLoader.createContext(environment, dirAndDevSettings, Some(sourceMapper), webCommands)
-                        val loader = ApplicationLoader(context)
+                        val loader = DefaultApplicationLoader(context)
                         loader.load(context)
                       }
 

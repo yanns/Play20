@@ -43,7 +43,7 @@ object ProdServerStart {
       val application: Application = {
         val environment = Environment(config.rootDir, process.classLoader, Mode.Prod)
         val context = ApplicationLoader.createContext(environment)
-        val loader = ApplicationLoader(context)
+        val loader = DefaultApplicationLoader(context)
         loader.load(context)
       }
       Play.start(application)

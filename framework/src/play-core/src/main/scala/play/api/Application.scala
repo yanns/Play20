@@ -4,11 +4,10 @@
 package play.api
 
 import java.io._
-import javax.inject.Inject
+import javax.inject.{ Inject, Singleton }
 
 import akka.actor.ActorSystem
 import akka.stream.{ ActorMaterializer, Materializer }
-import com.google.inject.Singleton
 import play.api.http._
 import play.api.inject.{ DefaultApplicationLifecycle, Injector, NewInstanceInjector, SimpleInjector }
 import play.api.libs.Files.{ DefaultTemporaryFileCreator, TemporaryFileCreator }
