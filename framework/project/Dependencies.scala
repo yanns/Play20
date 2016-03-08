@@ -137,6 +137,11 @@ object Dependencies {
     specsBuild.map(_ % Test) ++ logback.map(_ % Test) ++
     javaTestDeps
 
+  val guiceDependencies = Seq(
+    "com.google.inject" % "guice" % "4.0",
+    "com.google.inject.extensions" % "guice-assistedinject" % "4.0"
+  )
+
   val nettyVersion = "4.0.33.Final"
 
   val netty = Seq(

@@ -221,7 +221,7 @@ object PlayBuild extends Build {
       libraryDependencies ++= nettyUtilsDependencies
     )
 
-  lazy val PlayProject = PlayCrossBuiltProject("Play", "play")
+  lazy val PlayCoreProject = PlayCrossBuiltProject("Play-Core", "play-core")
     .enablePlugins(SbtTwirl)
     .settings(
       libraryDependencies ++= runtime(scalaVersion.value) ++ scalacheckDependencies,
@@ -252,6 +252,10 @@ object PlayBuild extends Build {
       PlayNettyUtilsProject,
       StreamsProject
     )
+
+  lazy val PlayProject = PlayCrossBuiltProject("Play", "play")
+    .settings(libraryDependencies ++= guiceDependencies)
+    .dependsOn(PlayCoreProject)
 
   lazy val PlayServerProject = PlayCrossBuiltProject("Play-Server", "play-server")
     .settings(libraryDependencies ++= playServerDependencies)
